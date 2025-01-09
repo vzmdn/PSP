@@ -1,0 +1,1 @@
+Missatge rebut: Hola\nMissatge rebut: null\nMissatge rebut: null\nMissatge rebut: holaaaaa\n
