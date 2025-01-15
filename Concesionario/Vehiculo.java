@@ -1,26 +1,26 @@
 
 import java.io.Serializable;
 
-public class Vehicle implements Serializable {
+public class Vehiculo implements Serializable {
     private String dni;
     private String matricula;
     private String marca;
     private String model;
     private String combustible;
-    private int any;
+    private int year;
 
     private static final long serialVersionUID = 1L;
 
-    public Vehicle(String dni, String matricula, String marca, String model, String combustible, int any) {
+    public Vehiculo(String dni, String matricula, String marca, String model, String combustible, int year) {
         this.dni = dni;
         this.matricula = matricula;
         this.marca = marca;
         this.model = model;
         this.combustible = combustible;
-        this.any = any;
+        this.year = year;
     }
 
-    public Vehicle() {
+    public Vehiculo() {
     }
 
     public String getDni() {
@@ -43,8 +43,8 @@ public class Vehicle implements Serializable {
         return combustible;
     }
 
-    public int getAny() {
-        return any;
+    public int getYear() {
+        return year;
     }
 
     public void setDni(String dni) {
@@ -68,7 +68,18 @@ public class Vehicle implements Serializable {
     }
 
     public void setAny(int any) {
-        this.any = any;
+        this.year = any;
     }
 
+    @Override
+    public String toString() {
+        return "Vehiculo{\n" +
+                "\tdni: " + dni + "\n" +
+                "\tmatricula: " + matricula + "\n" +
+                "\tmarca: " + marca + "\n" +
+                "\tmodel: " + model + "\n" +
+                "\tcombustible: " + combustible + "\n" +
+                "\taño: " + year + "\n" +
+                '}';
+    }
 }
