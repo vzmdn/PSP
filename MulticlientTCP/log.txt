@@ -1,1 +1,4 @@
-Missatge rebut: Hola\nMissatge rebut: null\nMissatge rebut: null\nMissatge rebut: holaaaaa\n
+Missatge rebut: Hola\nMissatge rebut: null\nMissatge rebut: null\nMissatge rebut: holaaaaa\nMissatge rebut: hola\nMissatge rebut: hola\nMissatge rebut: hola
+\nMissatge rebut: ggg
+\nMissatge rebut: g
+\n
