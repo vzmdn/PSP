@@ -1,4 +1,4 @@
-package Practica_3_2;
+package Practica_3_2_TCP;
 import java.io.*;
 import java.net.*;
 
