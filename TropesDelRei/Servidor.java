@@ -9,11 +9,14 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Servidor {
     public static void main(String args[]) {
         String str = "password";
         String password = "";
+
         try {
             password = encriptar(str);
         } catch (Exception e) {
@@ -30,16 +33,15 @@ public class Servidor {
          */
 
         try {
-            // socket_no -> PUERTO
             int socket_no = 5000;
             dSocket = new DatagramSocket(socket_no);
             byte[] mensajeRecibido;
 
+            System.out.println("Servidor iniciado en el puerto " + socket_no + ", esperando mensaje");
+
             while (true) {
                 mensajeRecibido = new byte[1000];
-                DatagramPacket dpRecibido = new DatagramPacket(
-                        mensajeRecibido,
-                        mensajeRecibido.length);
+                DatagramPacket dpRecibido = new DatagramPacket(mensajeRecibido, mensajeRecibido.length);
                 dSocket.receive(dpRecibido);
                 InetAddress senderAddress = dpRecibido.getAddress();
 
@@ -47,7 +49,12 @@ public class Servidor {
                 ByteBuffer wrapped = ByteBuffer.wrap(datosRecibidos, 0, 4);
                 int pwdLength = wrapped.getInt();
 
-                int mensajeLength = datosRecibidos.length - 4 - pwdLength;
+                if (pwdLength < 0 || pwdLength > datosRecibidos.length - 4) {
+                    System.out.println("Invalid password length received: " + pwdLength);
+                    continue;
+                }
+
+                int mensajeLength = dpRecibido.getLength() - 4 - pwdLength;
                 byte[] mensajeBytes = new byte[mensajeLength];
                 byte[] passwordBytes = new byte[pwdLength];
 
@@ -57,18 +64,11 @@ public class Servidor {
                 String mensajeOriginal = new String(mensajeBytes).trim();
                 String passwordRecibida = new String(passwordBytes).trim();
 
-                if (passwordRecibida.equals(password)) {
+                if (passwordRecibida.equals(password)) { // Replace with actual password check
                     System.out.println("Recibido del cliente " + senderAddress + ": " + mensajeOriginal);
 
-                    System.out.println(
-                            "Recibido del cliente " + senderAddress + ": " + new String(dpRecibido.getData()).trim());
-
-                    DatagramPacket dpRespuesta = new DatagramPacket(
-                            dpRecibido.getData(),
-                            dpRecibido.getLength(),
-                            dpRecibido.getAddress(),
-                            dpRecibido.getPort());
-
+                    DatagramPacket dpRespuesta = new DatagramPacket(dpRecibido.getData(), dpRecibido.getLength(),
+                            dpRecibido.getAddress(), dpRecibido.getPort());
                     dSocket.send(dpRespuesta);
                 } else {
                     System.out.println("Tornen les tropes a casa, hi ha infiltrats");
@@ -87,12 +87,17 @@ public class Servidor {
     }
 
     public static String encriptar(String password) throws Exception {
-        // Generar clave AES
-        SecretKey secretKey = KeyGenerator.getInstance("AES").generateKey();
+        // Fixed secret key (for example, derived from a password)
+        byte[] keyBytes = "1234567890123456".getBytes(); // 16 bytes = 128 bits
+        SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+
+        // Fixed IV (must be 16 bytes for AES)
+        byte[] ivBytes = "abcdefghijklmnop".getBytes(); // 16 bytes = 128 bits
+        IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
         // Encriptar la contraseña
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
         String pwdEncriptada = Base64.getEncoder().encodeToString(cipher.doFinal(password.getBytes()));
 
         return pwdEncriptada;

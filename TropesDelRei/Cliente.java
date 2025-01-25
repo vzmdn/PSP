@@ -10,11 +10,13 @@ import java.util.Scanner;
 import javax.crypto.Cipher;
 import javax.crypto.KeyGenerator;
 import javax.crypto.SecretKey;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 
 public class Cliente {
     static Scanner tec = new Scanner(System.in);
 
-    public static void main(String args[]) {
+    public static void main(String args[]) throws Exception {
 
         DatagramSocket dSocket = null;
 
@@ -25,54 +27,29 @@ public class Cliente {
          * }
          */
         try {
-            // ENVIO
             dSocket = new DatagramSocket();
-            System.out.print("Introduce un mensaje: ");
+            System.out.print("Introduce el mensaje a enviar: ");
             String mensaje = tec.nextLine();
             System.out.print("Introduce la contraseña: ");
-            String password = tec.nextLine();
-            String pwdEncriptada = "";
-            try {
-                pwdEncriptada = encriptar(password);
-            } catch (Exception e) {
-                System.out.println("error al encriptar: " + e.getMessage());
-                System.exit(1);
-            }
-            byte[] mensajeEnviado = (mensaje).getBytes();
+            String pwdEncriptada = encriptar(tec.nextLine());
+
+            byte[] mensajeEnviado = mensaje.getBytes();
             byte[] pwdEncriptadaBytes = pwdEncriptada.getBytes();
             byte[] pwdLengthBytes = ByteBuffer.allocate(4).putInt(pwdEncriptadaBytes.length).array();
             byte[] datosCombinados = new byte[4 + mensajeEnviado.length + pwdEncriptadaBytes.length];
-            System.arraycopy(
-                    pwdLengthBytes,
-                    0,
-                    datosCombinados,
-                    0,
-                    4);
-            System.arraycopy(
-                    mensajeEnviado,
-                    0,
-                    datosCombinados,
-                    0,
-                    mensajeEnviado.length);
-            System.arraycopy(
-                    pwdEncriptadaBytes,
-                    0,
-                    datosCombinados,
-                    mensajeEnviado.length,
+
+            System.arraycopy(pwdLengthBytes, 0, datosCombinados, 0, 4);
+            System.arraycopy(mensajeEnviado, 0, datosCombinados, 4, mensajeEnviado.length);
+            System.arraycopy(pwdEncriptadaBytes, 0, datosCombinados, 4 + mensajeEnviado.length,
                     pwdEncriptadaBytes.length);
-            // aHost -> HOST
+
             InetAddress aHost = InetAddress.getByName("localhost");
-            // serverPort -> PUERTO
             int serverPort = 5000;
 
-            // Creación del datagrama
-            DatagramPacket dpEnviado = new DatagramPacket(
-                    datosCombinados,
-                    datosCombinados.length,
-                    aHost, serverPort);
+            DatagramPacket dpEnviado = new DatagramPacket(datosCombinados, datosCombinados.length, aHost, serverPort);
             dSocket.send(dpEnviado);
 
-            // RECPCIÓN
+            // RECEPCIÓN
             byte[] mensajeRecibido = new byte[1000];
             DatagramPacket dpRecibido = new DatagramPacket(mensajeRecibido, mensajeRecibido.length);
             dSocket.receive(dpRecibido);
@@ -89,12 +66,17 @@ public class Cliente {
     }
 
     public static String encriptar(String password) throws Exception {
-        // Generar clave AES
-        SecretKey secretKey = KeyGenerator.getInstance("AES").generateKey();
+        // Fixed secret key (for example, derived from a password)
+        byte[] keyBytes = "1234567890123456".getBytes(); // 16 bytes = 128 bits
+        SecretKey secretKey = new SecretKeySpec(keyBytes, "AES");
+
+        // Fixed IV (must be 16 bytes for AES)
+        byte[] ivBytes = "abcdefghijklmnop".getBytes(); // 16 bytes = 128 bits
+        IvParameterSpec ivSpec = new IvParameterSpec(ivBytes);
 
         // Encriptar la contraseña
-        Cipher cipher = Cipher.getInstance("AES");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKey);
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivSpec);
         String pwdEncriptada = Base64.getEncoder().encodeToString(cipher.doFinal(password.getBytes()));
 
         return pwdEncriptada;
