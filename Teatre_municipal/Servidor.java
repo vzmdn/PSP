@@ -4,8 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class Servidor {
-    static final int PUERTO = 4500;
-    static int nCli = 3;
+    static final int PUERTO = 5000;
     private Map<String, Integer> butacasDisponibles;
 
     public Servidor() {
@@ -17,13 +16,13 @@ public class Servidor {
         butacasDisponibles.put("VIP1", 3);
         butacasDisponibles.put("VIP2", 3);
 
+        ServerSocket skServidor = null;
         try {
-            ServerSocket skServidor = new ServerSocket(PUERTO);
+            skServidor = new ServerSocket(PUERTO);
             System.out.println("Escucho el puerto " + PUERTO);
 
             while (true) {
                 Socket skCliente = skServidor.accept();
-                
 
                 InputStream auxIn = skCliente.getInputStream();
                 DataInputStream flujoIn = new DataInputStream(auxIn);
@@ -37,7 +36,7 @@ public class Servidor {
                 if (mensaje.toLowerCase().equals("fin")) {
                     flujoOut.writeUTF("Fin");
                     skCliente.close();
-                    continue;
+                    break;
                 }
 
                 if (mensaje.toLowerCase().equals("ver butacas")) {
@@ -50,21 +49,34 @@ public class Servidor {
                     int disponibles = butacasDisponibles.get(mensaje);
                     if (disponibles > 0) {
                         butacasDisponibles.put(mensaje, disponibles - 1);
+                        flujoOut.writeUTF("Has reservado una butaca " + mensaje + ", quedan " + (disponibles - 1) + " disponibles");
                     } else {
                         flujoOut.writeUTF("Butacas agotadas");
                     }
-                }
-                else if(mensaje.toLowerCase().equals("hola")){
+                } else if (mensaje.toLowerCase().equals("hola")) {
                     flujoOut.writeUTF("Hola, soy el servidor");
-
                 } else {
-                    flujoOut.writeUTF("Error");
+                    flujoOut.writeUTF("Los codigos de butacas disponibles son: "
+                            + "\nGAL, CEN, LAT1, LAT2, VIP1, VIP2"
+                            + "\nOtras opciones: "
+                            + "\n  - Ver butacas"
+                            + "\n  - Fin");
                 }
 
                 skCliente.close();
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        finally{
+            System.out.println("Cerrando servidor...");
+            if (skServidor != null) {
+                try {
+                    skServidor.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 

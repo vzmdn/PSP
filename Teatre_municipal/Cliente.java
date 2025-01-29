@@ -4,13 +4,14 @@ import java.util.Scanner;
 
 public class Cliente {
     static final String HOST = "localhost";
-    static final int PUERTO = 4500;
+    static final int PUERTO = 5000;
 
     public Cliente() {
+        Socket skCliente = null;
         try {
             Scanner scanner = new Scanner(System.in);
             while (true) {
-                Socket skCliente = new Socket(HOST, PUERTO);
+                skCliente = new Socket(HOST, PUERTO);
 
                 System.out.println("Introduce el codigo de la butaca que quieres reservar: ");
                 String mensaje = scanner.nextLine();
@@ -21,17 +22,27 @@ public class Cliente {
 
                 InputStream auxIn = skCliente.getInputStream();
                 DataInputStream flujoIn = new DataInputStream(auxIn);
-                String respuesta = flujoIn.readUTF();
-                System.out.println("Servidor: " + respuesta);
+                try {
+                    String respuesta = flujoIn.readUTF();
+                    System.out.println("Servidor: " + respuesta);
+                } catch (EOFException eof) {
+                    System.out.println("Connection closed by server.");
+                }
 
-                skCliente.close();
-
-                if (mensaje.equals("Fino")) {
+                if (mensaje.toLowerCase().equals("fin")) {
                     break;
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            if (skCliente != null) {
+                try {
+                    skCliente.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
